@@ -1,23 +1,22 @@
 package com.financeTracker.financeTracker.security;
 
-import com.financeTracker.financeTracker.data.repositories.UserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.AllArgsConstructor;
-import org.apache.tomcat.jni.SSLConf;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
-import java.security.KeyStore;
 import java.util.*;
 import java.util.function.Function;
 
 @Service
+@Slf4j
 public class JwtTokenProvider {
     @Value("${jwt.secrete}")
     private String jwtSecrete;
@@ -66,5 +65,17 @@ public class JwtTokenProvider {
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey(),SignatureAlgorithm.HS256).compact();
+    }
+
+    public String generateToken(Authentication authentication){
+        log.info("Line 71 authentication {}",authentication);
+        UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+        log.info(userPrincipal.getUsername());
+        return Jwts.builder()
+                .setSubject((userPrincipal.getEmail()))
+                .setIssuedAt(new Date())
+                .setExpiration(new Date((new Date()).getTime() + jwtExpiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
     }
 }

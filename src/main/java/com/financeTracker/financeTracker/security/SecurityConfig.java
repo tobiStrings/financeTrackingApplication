@@ -24,10 +24,7 @@ public class SecurityConfig  {
     private final CustomUserDetailsService customUserDetailsService;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    @Bean
-    public BCryptPasswordEncoder bCryptPasswordEncoder(){
-        return new BCryptPasswordEncoder();
-    }
+
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider(){
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();

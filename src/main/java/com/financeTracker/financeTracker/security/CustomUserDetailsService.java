@@ -1,17 +1,13 @@
 package com.financeTracker.financeTracker.security;
 
-import com.financeTracker.financeTracker.data.model.User;
+import com.financeTracker.financeTracker.data.model.AppUser;
 import com.financeTracker.financeTracker.data.repositories.UserRepository;
-import com.financeTracker.financeTracker.exceptions.UserNotFoundException;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -21,8 +17,10 @@ public class CustomUserDetailsService implements UserDetailsService{
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findUSerByUsername(username).orElseThrow(()->new UsernameNotFoundException("User with username "+username+" not found"));
-        UserPrincipal userPrincipal = UserPrincipal.create(user);
-        return userPrincipal;
+        AppUser appUser = userRepository.findUserByEmail(username).orElseThrow(()->new UsernameNotFoundException("User with email "+username+" not found"));
+        log.info("App user {}",appUser);
+        UserDetails userDetails =  UserPrincipal.create(appUser);
+        log.info("User principal {}",userDetails.getUsername());
+        return userDetails;
     }
 }

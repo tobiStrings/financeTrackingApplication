@@ -4,11 +4,12 @@ import com.financeTracker.financeTracker.data.enums.Status;
 import lombok.Data;
 
 
-public class FinanceTrackerException extends Exception{
-    public FinanceTrackerException() {
+public class TransactionException extends FinanceTrackerException{
+    public TransactionException() {
     }
 
-    public FinanceTrackerException(String message) {
+    public TransactionException(String message) {
         super(message);
+
     }
 }

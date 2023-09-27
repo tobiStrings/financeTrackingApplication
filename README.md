@@ -73,6 +73,6 @@ To get the Finance Tracking Application up and running on your local machine, fo
 The finance application should be running on http://localhost:8080
 
 ### API Documentation
-1. The API documentation for the Finance Tracking Application is available at [API Documentation]()
+1. The API documentation for the Finance Tracking Application is available at [API Documentation](https://documenter.getpostman.com/view/20933553/2s9YJXaktu)
 
 ### Contributing
