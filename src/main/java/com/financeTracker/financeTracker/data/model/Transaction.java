@@ -17,6 +17,7 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private BigDecimal amount;
+    private String uuid;
     @Enumerated(EnumType.STRING)
     private TransactionCategory transactionCategory;
     @ManyToOne
