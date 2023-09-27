@@ -5,6 +5,7 @@ import com.financeTracker.financeTracker.data.model.RefreshToken;
 import com.financeTracker.financeTracker.data.repositories.RefreshTokenRepository;
 import com.financeTracker.financeTracker.exceptions.RefreshTokenException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -13,20 +14,30 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class RefreshTokenServiceImpl implements RefreshTokenService{
 
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Override
     public RefreshToken generateRefreshToken(AppUser userId){
+        try{
+            RefreshToken refreshToken = findRefreshTokenByAppUserId(userId.getId());
 
-        RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setCreatedDate(Instant.now());
-        refreshToken.setToken(UUID.randomUUID().toString());
-        refreshToken.setAppUser(userId);
-        refreshToken.setExpirationDate(Instant.ofEpochMilli(1800000));
-        return saveRefreshToken(refreshToken);
+            refreshToken.setCreatedDate(Instant.now());
+            refreshToken.setToken(UUID.randomUUID().toString());
+            refreshToken.setAppUser(userId);
+            refreshToken.setExpirationDate(Instant.ofEpochMilli(1800000));
+            return saveRefreshToken(refreshToken);
+        }catch (RefreshTokenException ex){
 
+            RefreshToken refreshToken = new RefreshToken();
+            refreshToken.setCreatedDate(Instant.now());
+            refreshToken.setToken(UUID.randomUUID().toString());
+            refreshToken.setAppUser(userId);
+            refreshToken.setExpirationDate(Instant.ofEpochMilli(1800000));
+            return saveRefreshToken(refreshToken);
+        }
     }
     private RefreshToken saveRefreshToken(RefreshToken refreshToken){
         return refreshTokenRepository.save(refreshToken);
@@ -39,7 +50,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService{
 
     @Override
     public void deleteRefreshToken(String refreshToken){
-        refreshTokenRepository.deleteByToken(refreshToken);
+        refreshTokenRepository.deleteRefreshTokenByToken(refreshToken);
     }
 
     @Override
@@ -55,5 +66,10 @@ public class RefreshTokenServiceImpl implements RefreshTokenService{
     public boolean checkRefreshTokenExpiration(String refreshToken) throws RefreshTokenException {
         RefreshToken foundToken = findRefreshTokenByRefreshToken(refreshToken);
         return foundToken.getCreatedDate().isBefore(foundToken.getExpirationDate());
+    }
+
+    @Override
+    public RefreshToken findRefreshTokenByAppUserId(Long id) throws RefreshTokenException {
+        return refreshTokenRepository.findRefreshTokenByAppUser_Id(id).orElseThrow(() -> new RefreshTokenException("Refresh token not found"));
     }
 }

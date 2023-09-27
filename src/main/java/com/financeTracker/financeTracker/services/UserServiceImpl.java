@@ -24,4 +24,9 @@ public class UserServiceImpl implements UserService{
     public AppUser findUserByEMail(String email) throws UserNotFoundException {
         return userRepository.findUserByEmail(email).orElseThrow(()-> new UserNotFoundException("User with email not found!"));
     }
+
+    @Override
+    public AppUser findUserByUsername(String username) throws UserNotFoundException {
+        return userRepository.findUSerByUsername(username).orElseThrow(()-> new UserNotFoundException("User with username not found!"));
+    }
 }

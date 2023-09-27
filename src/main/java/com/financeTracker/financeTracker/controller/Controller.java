@@ -17,6 +17,7 @@ public class Controller {
             case NOT_FOUND -> response.setStatus(HttpStatus.NOT_FOUND.value());
             case FORBIDDEN -> response.setStatus(HttpStatus.FORBIDDEN.value());
             case BAD_REQUEST -> response.setStatus(HttpStatus.BAD_REQUEST.value());
+            case UNAUTHORIZED -> response.setStatus(HttpStatus.UNAUTHORIZED.value());
             default -> response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
 

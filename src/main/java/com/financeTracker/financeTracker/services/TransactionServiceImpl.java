@@ -11,7 +11,9 @@ import com.financeTracker.financeTracker.exceptions.InvalidTransactionCategory;
 import com.financeTracker.financeTracker.exceptions.InvalidUserInputException;
 import com.financeTracker.financeTracker.exceptions.TransactionException;
 import com.financeTracker.financeTracker.exceptions.UserNotFoundException;
+import com.financeTracker.financeTracker.security.CurrentUserService;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -26,15 +28,17 @@ public class TransactionServiceImpl implements TransactionService{
     public AddTransactionResponse addTransaction(AddTransactionRequest addTransactionRequest) {
         try{
             validateAddTransactionRequest(addTransactionRequest);
-            AppUser user = userService.findUserByEMail(addTransactionRequest.getUserEmail());
             Transaction transaction = new Transaction();
             transaction.setTransactionCategory(getTransactionCategoryType(addTransactionRequest.getTransactionCategory()));
             transaction.setAmount(BigDecimal.valueOf(addTransactionRequest.getAmount()));
             transaction.setCreatedAT(new Date());
+            AppUser user = userService.findUserByUsername(CurrentUserService.getCurrentUserUsername());
             transaction.setAppUser(user);
-            return new AddTransactionResponse(Status.SUCCESS,"Transaction added sucessfully",saveTransaction(transaction));
-        }catch (InvalidUserInputException | UserNotFoundException|InvalidTransactionCategory ex){
+            return new AddTransactionResponse(Status.SUCCESS,"Transaction added successfully",saveTransaction(transaction));
+        }catch (InvalidUserInputException |InvalidTransactionCategory ex){
             return new AddTransactionResponse(Status.BAD_REQUEST,ex.getMessage(),null);
+        }catch (UserNotFoundException e){
+            return new AddTransactionResponse(Status.UNAUTHORIZED,e.getLocalizedMessage(),null);
         }
     }
 
@@ -44,9 +48,6 @@ public class TransactionServiceImpl implements TransactionService{
     }
 
     private void validateAddTransactionRequest(AddTransactionRequest request) throws InvalidUserInputException {
-        if (null ==  request.getUserEmail() || request.getUserEmail().isBlank() ||request.getUserEmail().isEmpty()){
-            throw new InvalidUserInputException("User email cannot be blank or empty");
-        }
         if (request.getAmount() <=0){
             throw new InvalidUserInputException("Transaction amount cannot be recorded");
         }
@@ -71,6 +72,6 @@ public class TransactionServiceImpl implements TransactionService{
         if (transactionCategory.equalsIgnoreCase("OTHERS")){
             return TransactionCategory.OTHERS;
         }
-        throw new InvalidTransactionCategory();
+        throw new InvalidTransactionCategory("Invalid transaction category");
     }
 }

@@ -14,4 +14,6 @@ public interface RefreshTokenService {
     RefreshToken findRefreshTokenByRefreshToken(String token) throws RefreshTokenException;
 
     boolean checkRefreshTokenExpiration(String refreshToken) throws RefreshTokenException;
+
+    RefreshToken findRefreshTokenByAppUserId(Long id) throws RefreshTokenException;
 }

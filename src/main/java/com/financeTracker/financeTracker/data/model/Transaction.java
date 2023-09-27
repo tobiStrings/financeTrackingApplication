@@ -1,5 +1,6 @@
 package com.financeTracker.financeTracker.data.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.financeTracker.financeTracker.data.enums.TransactionCategory;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class Transaction {
     @Enumerated(EnumType.STRING)
     private TransactionCategory transactionCategory;
     @ManyToOne
+    @JsonIgnore
     private AppUser appUser;
     @CreationTimestamp
     private Date createdAT;

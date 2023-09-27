@@ -1,15 +1,13 @@
 package com.financeTracker.financeTracker.services;
 
-import com.financeTracker.financeTracker.data.dtos.LoginRequest;
-import com.financeTracker.financeTracker.data.dtos.LoginResponse;
+import com.financeTracker.financeTracker.data.dtos.*;
 import com.financeTracker.financeTracker.data.model.Otp;
 import com.financeTracker.financeTracker.data.model.RefreshToken;
 import com.financeTracker.financeTracker.exceptions.*;
 import com.financeTracker.financeTracker.security.CustomAuthenticationManager;
 import com.financeTracker.financeTracker.security.JwtTokenProvider;
+import com.financeTracker.financeTracker.security.UserPrincipal;
 import com.financeTracker.financeTracker.utils.Constant;
-import com.financeTracker.financeTracker.data.dtos.RegisterRequest;
-import com.financeTracker.financeTracker.data.dtos.RegisterResponse;
 import com.financeTracker.financeTracker.data.enums.Role;
 import com.financeTracker.financeTracker.data.enums.Status;
 import com.financeTracker.financeTracker.data.model.AppUser;
@@ -17,20 +15,16 @@ import com.financeTracker.financeTracker.utils.EmailUtils;
 import jakarta.mail.MessagingException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.io.UnsupportedEncodingException;
 import java.time.Instant;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -40,7 +34,6 @@ public class AuthServiceImpl implements AuthService{
     private final BCryptPasswordEncoder passwordEncoder;
     private final OtpService otpService;
     private final EmailUtils emailUtils;
-//    private final AuthenticationManager authenticateManager;
     private final CustomAuthenticationManager customAuthenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
@@ -78,31 +71,47 @@ public class AuthServiceImpl implements AuthService{
     public LoginResponse login(LoginRequest request) {
         try{
             validateLoginRequest(request);
-            AppUser user = userService.findUserByEMail(request.getEmail());
-//            checkIfPasswordMatchesUserPassword(request.getPassword(),user.getPassword());
-//            checkIfUserIsEnabled(user.isEnabled());
-            log.info("Here");
-//            List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
+            AppUser user = userService.findUserByUsername(request.getUsername());
+            log.info("Nibi");
             Authentication authentication =customAuthenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-            log.info("Here something happened {}",authentication.isAuthenticated());
-            log.info("Authentication {}",authentication);
-            log.info("Context {}",SecurityContextHolder.getContext().getAuthentication());
+                    new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.info("Context {}",SecurityContextHolder.getContext().getAuthentication());
-            log.info("Got here");
+            log.info("Ita");
             String jwt = jwtTokenProvider.generateToken(authentication);
-            log.info("Jwt {}",jwt);
+            log.info("Jwt {}", jwt);
             RefreshToken refreshToken = refreshTokenService.generateRefreshToken(user);
-            log.info("Refresh Token {}", refreshToken);
+
             return new LoginResponse(Status.SUCCESS,
-                    "Login successful", user.getUserId(),
+                    "Login successful", user.getId(),
                     jwt,
                     refreshToken.getToken(),
                     Instant.now());
-        }catch (InvalidUserInputException|UserNotFoundException ex){
+        }catch (InvalidUserInputException ex){
             log.info("here ni ohh");
             return new LoginResponse(Status.BAD_REQUEST, ex.getLocalizedMessage());
+        }catch (UserNotFoundException ex){
+            return new LoginResponse(Status.NOT_FOUND,ex.getLocalizedMessage());
+        }
+    }
+
+    @Override
+    public ReGenerateTokenResponse regenerateToken(String refreshToken) {
+        try{
+            if (null == refreshToken || refreshToken.isEmpty() || refreshToken.isBlank()){
+                throw new InvalidUserInputException("Refresh token is required");
+            }
+            if (refreshTokenService.checkRefreshTokenExpiration(refreshToken)){
+                refreshTokenService.deleteRefreshToken(refreshToken);
+                throw new RefreshTokenException("Refresh token has expired!");
+            }
+            RefreshToken token = refreshTokenService.findRefreshTokenByRefreshToken(refreshToken);
+            UserDetails userDetails = UserPrincipal.create(token.getAppUser());
+            String jwt = jwtTokenProvider.generateToken(userDetails);
+            return new ReGenerateTokenResponse(Status.SUCCESS,"Token generated successfully",jwt,refreshToken);
+        }catch (InvalidUserInputException ex){
+            return new ReGenerateTokenResponse(Status.BAD_REQUEST,ex.getLocalizedMessage());
+        } catch (RefreshTokenException e) {
+            return new ReGenerateTokenResponse(Status.NOT_FOUND,e.getLocalizedMessage());
         }
     }
 
@@ -145,23 +154,13 @@ public class AuthServiceImpl implements AuthService{
     }
 
     private void validateLoginRequest(LoginRequest request) throws InvalidUserInputException {
-        if (null == request.getEmail() || request.getEmail().isBlank() || request.getEmail().isEmpty()){
+        if (null == request.getUsername() || request.getUsername().isBlank() || request.getUsername().isEmpty()){
             throw new InvalidUserInputException("Email is required!");
         }
         if (null == request.getPassword() || request.getPassword().isEmpty() || request.getPassword().isBlank()){
             throw new InvalidUserInputException("Password is required!");
         }
     }
-    //Change the response to 401
-    private void checkIfUserIsEnabled(boolean isEnabled) throws UserNorEnabledException {
-        if (!isEnabled){
-            throw new UserNorEnabledException("User not enabled!");
-        }
-    }
-    //Change the response to 401
-    private void checkIfPasswordMatchesUserPassword(String password, String userPassword) throws IncorrectPasswordExeption {
-        if (!passwordEncoder.matches(password,userPassword)){
-            throw new IncorrectPasswordExeption("Password is incorrect");
-        }
-    }
+
+
 }

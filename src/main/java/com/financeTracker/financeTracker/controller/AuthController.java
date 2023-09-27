@@ -1,9 +1,6 @@
 package com.financeTracker.financeTracker.controller;
 
-import com.financeTracker.financeTracker.data.dtos.BaseResponse;
-import com.financeTracker.financeTracker.data.dtos.LoginRequest;
-import com.financeTracker.financeTracker.data.dtos.LoginResponse;
-import com.financeTracker.financeTracker.data.dtos.RegisterRequest;
+import com.financeTracker.financeTracker.data.dtos.*;
 import com.financeTracker.financeTracker.services.AuthService;
 import jakarta.annotation.security.PermitAll;
 import lombok.AllArgsConstructor;
@@ -24,5 +21,10 @@ public class AuthController extends com.financeTracker.financeTracker.controller
     @PermitAll
     public LoginResponse login(@RequestBody LoginRequest request){
         return responseWithUpdatedHttpStatus(authService.login(request));
+    }
+
+    @GetMapping("{refreshToken}")
+    public ReGenerateTokenResponse reGenerateToken(@PathVariable String refreshToken){
+        return responseWithUpdatedHttpStatus(authService.regenerateToken(refreshToken));
     }
 }

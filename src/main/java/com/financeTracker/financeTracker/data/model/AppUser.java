@@ -19,7 +19,7 @@ import java.util.Date;
 public class AppUser {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long userId;
+    private Long id;
     private String email;
     private String password;
     private String username;

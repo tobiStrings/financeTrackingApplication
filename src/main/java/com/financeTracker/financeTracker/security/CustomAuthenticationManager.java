@@ -38,7 +38,7 @@ public class CustomAuthenticationManager implements AuthenticationManager {
     //Change the response to 401
     private void checkIfPasswordMatchesUserPassword(String password, String userPassword) throws IncorrectPasswordExeption {
         if (!passwordEncoder.matches(password,userPassword)){
-            throw new IncorrectPasswordExeption("Password is incorrect");
+            throw new IncorrectPasswordExeption("Username or password is wrong");
         }
     }
 }

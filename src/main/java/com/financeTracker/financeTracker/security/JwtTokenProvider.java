@@ -68,11 +68,10 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(Authentication authentication){
-        log.info("Line 71 authentication {}",authentication);
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         log.info(userPrincipal.getUsername());
         return Jwts.builder()
-                .setSubject((userPrincipal.getEmail()))
+                .setSubject((userPrincipal.getUsername()))
                 .setIssuedAt(new Date())
                 .setExpiration(new Date((new Date()).getTime() + jwtExpiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)

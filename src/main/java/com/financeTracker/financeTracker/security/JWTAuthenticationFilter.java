@@ -65,28 +65,28 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         try{
-            log.info("Got here");
+
             if (request.getHeader("Authorization") == null){
-                log.info("No token");
+
                 filterChain.doFilter(request,response);
                 return;
             }
             String jwt = getJwtFromRequest(request);
+
             if (null != jwt){
-                log.info("Jwt {}",jwt);
+
                 String username =  jwtTokenProvider.getUsernameFromJwtToken(jwt);
-                log.info("Username {}",username);
+
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                if ( !jwtTokenProvider.isTokenValid(jwt,userDetails)){
+                if (jwtTokenProvider.isTokenValid(jwt,userDetails)){
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails.getUsername(), null,
                             userDetails.getAuthorities());
-                    log.info("Authentication {}",authentication);
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
 
-            log.info("Got here too");
+
             filterChain.doFilter(request, response);
         }catch (Exception ex){
             logger.error("Cannot set user authentication: {}", ex);

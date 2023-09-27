@@ -7,4 +7,5 @@ public interface UserService {
     AppUser saveUser(AppUser appUser);
     AppUser findUserByEmailOrUsername(String email, String username) throws UserNotFoundException;
     AppUser findUserByEMail(String email) throws UserNotFoundException;
+    AppUser findUserByUsername(String username) throws UserNotFoundException;
 }
