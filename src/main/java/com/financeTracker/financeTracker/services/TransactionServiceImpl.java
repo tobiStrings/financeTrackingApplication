@@ -2,12 +2,13 @@ package com.financeTracker.financeTracker.services;
 
 import com.financeTracker.financeTracker.data.dtos.*;
 import com.financeTracker.financeTracker.data.enums.Status;
-import com.financeTracker.financeTracker.data.enums.TransactionCategory;
+import com.financeTracker.financeTracker.data.enums.Category;
 import com.financeTracker.financeTracker.data.model.AppUser;
 import com.financeTracker.financeTracker.data.model.Transaction;
 import com.financeTracker.financeTracker.data.repositories.TransactionRepository;
 import com.financeTracker.financeTracker.exceptions.*;
 import com.financeTracker.financeTracker.security.CurrentUserService;
+import com.financeTracker.financeTracker.utils.ApplicationUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,20 +23,23 @@ import java.util.UUID;
 public class TransactionServiceImpl implements TransactionService{
     private final UserService userService;
     private final TransactionRepository transactionRepository;
+    private final BudgetService budgetService;
     @Override
     public AddTransactionResponse addTransaction(AddTransactionRequest addTransactionRequest) {
         try{
             validateAddTransactionRequest(addTransactionRequest);
+            Category category = ApplicationUtils.getTransactionCategoryType(addTransactionRequest.getTransactionCategory());
             UUID uuid = UUID.randomUUID();
             Transaction transaction = new Transaction();
             transaction.setUuid(uuid.toString());
-            transaction.setTransactionCategory(getTransactionCategoryType(addTransactionRequest.getTransactionCategory()));
+            transaction.setTransactionCategory(category);
             transaction.setAmount(BigDecimal.valueOf(addTransactionRequest.getAmount()));
             transaction.setCreatedAT(new Date());
             AppUser user = userService.findUserByUsername(CurrentUserService.getCurrentUserUsername());
             transaction.setAppUser(user);
+            budgetService.getCurrentBudgetAndUpdateSpending(user.getId(),addTransactionRequest.getAmount(),category);
             return new AddTransactionResponse(Status.SUCCESS,"Transaction added successfully",saveTransaction(transaction));
-        }catch (InvalidUserInputException |InvalidTransactionCategory ex){
+        }catch (InvalidUserInputException |InvalidTransactionCategory|BudgetException ex){
             return new AddTransactionResponse(Status.BAD_REQUEST,ex.getMessage(),null);
         }catch (UserNotFoundException e){
             return new AddTransactionResponse(Status.UNAUTHORIZED,e.getLocalizedMessage(),null);
@@ -84,7 +88,7 @@ public class TransactionServiceImpl implements TransactionService{
     public FetchTransactionsResponse fetchTransactionsByTransactionCategory(String category) {
         try{
             String username  = CurrentUserService.getCurrentUserUsername();
-            TransactionCategory transactionCategory  = getTransactionCategoryType(category);
+            Category transactionCategory  = ApplicationUtils.getTransactionCategoryType(category);
             List<Transaction> transactions = transactionRepository.findTransactionByTransactionCategoryAndAppUser_Username(transactionCategory,username);
             if (transactions.isEmpty()){
                 throw new TransactionNotFoundException("Transactions with category "+category +" does not exist");
@@ -101,7 +105,7 @@ public class TransactionServiceImpl implements TransactionService{
             validateUpdateTransactionRequest(request,uuid);
             Transaction transaction = findTransactionByUuid(uuid);
             if (null != request.getTransactionCategory() && !request.getTransactionCategory().isEmpty() && !request.getTransactionCategory().isBlank()){
-                transaction.setTransactionCategory(getTransactionCategoryType(request.getTransactionCategory()));
+                transaction.setTransactionCategory(ApplicationUtils.getTransactionCategoryType(request.getTransactionCategory()));
             }
             if (request.getAmount() >0){
                 transaction.setAmount(BigDecimal.valueOf(request.getAmount()));
@@ -149,22 +153,4 @@ public class TransactionServiceImpl implements TransactionService{
         }
     }
 
-    private TransactionCategory getTransactionCategoryType(String transactionCategory) throws InvalidTransactionCategory {
-        if (transactionCategory.equalsIgnoreCase("UTILITY")){
-            return TransactionCategory.UTILITY;
-        }
-
-        if (transactionCategory.equalsIgnoreCase("FOOD")){
-            return TransactionCategory.FOOD;
-        }
-
-        if (transactionCategory.equalsIgnoreCase("HOUSING")){
-            return TransactionCategory.HOUSING;
-        }
-
-        if (transactionCategory.equalsIgnoreCase("OTHERS")){
-            return TransactionCategory.OTHERS;
-        }
-        throw new InvalidTransactionCategory("Invalid transaction category");
-    }
 }

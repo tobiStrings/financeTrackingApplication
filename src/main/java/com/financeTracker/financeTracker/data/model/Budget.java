@@ -10,21 +10,27 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.util.Date;
 
-@Data
 @Entity
-public class Transaction {
+@Data
+public class Budget {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private BigDecimal amount;
     private String uuid;
     @Enumerated(EnumType.STRING)
-    private Category transactionCategory;
+    private Category category;
+    private BigDecimal monthlyBudget;
+    private BigDecimal weeklyBudget;
+    private BigDecimal totalMonthlySpent;
+    private BigDecimal weekOneAmount;
+    private BigDecimal weekTwoAmount;
+    private BigDecimal weekThreeAmount;
+    private BigDecimal weekFourAmount;
     @ManyToOne
     @JsonIgnore
     private AppUser appUser;
     @CreationTimestamp
-    private Date createdAT;
+    private Date createdAt;
     @UpdateTimestamp
     private Date updatedAt;
 }

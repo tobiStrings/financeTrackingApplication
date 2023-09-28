@@ -1,7 +1,6 @@
 package com.financeTracker.financeTracker.data.dtos;
 
 import com.financeTracker.financeTracker.data.enums.Status;
-import com.financeTracker.financeTracker.data.enums.TransactionCategory;
 import com.financeTracker.financeTracker.data.model.Transaction;
 import lombok.Data;
 
