@@ -1,7 +1,6 @@
 package com.financeTracker.financeTracker.services;
 
 import com.financeTracker.financeTracker.data.dtos.*;
-import com.financeTracker.financeTracker.data.model.Otp;
 import com.financeTracker.financeTracker.data.model.RefreshToken;
 import com.financeTracker.financeTracker.exceptions.*;
 import com.financeTracker.financeTracker.security.CustomAuthenticationManager;
@@ -11,8 +10,6 @@ import com.financeTracker.financeTracker.utils.Constant;
 import com.financeTracker.financeTracker.data.enums.Role;
 import com.financeTracker.financeTracker.data.enums.Status;
 import com.financeTracker.financeTracker.data.model.AppUser;
-import com.financeTracker.financeTracker.utils.EmailUtils;
-import jakarta.mail.MessagingException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -22,7 +19,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.util.Date;
 
@@ -32,8 +28,6 @@ import java.util.Date;
 public class AuthServiceImpl implements AuthService{
     private final UserService userService;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final OtpService otpService;
-    private final EmailUtils emailUtils;
     private final CustomAuthenticationManager customAuthenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenService refreshTokenService;
@@ -50,20 +44,15 @@ public class AuthServiceImpl implements AuthService{
                     .lastName(registerRequest.getLastName())
                     .phoneNumber(registerRequest.getPhoneNumber())
                     .role(Role.USER)
-                    .enabled(false)
+                    .enabled(true)
                     .createdDate(new Date())
                     .build();
-            appUser = userService.saveUser(appUser);
-            Otp otp = otpService.generateOtp(appUser);
-            emailUtils.sendRegistrationMail(appUser.getFirstName(), appUser.getEmail(),otp.getOtp());
+            userService.saveUser(appUser);
             log.info("Here before returning response!");
             return new RegisterResponse(Status.CREATED,"User created Successfully");
         }catch (InvalidUserInputException| UserAlreadyExistException ex){
             log.info("something went wrong here {}",ex.getLocalizedMessage());
             return new RegisterResponse(Status.BAD_REQUEST, ex.getLocalizedMessage());
-        } catch (OtpException | MessagingException | UnsupportedEncodingException e) {
-            log.info(e.getLocalizedMessage());
-            return new RegisterResponse(Status.INTERNAL_ERROR, e.getLocalizedMessage());
         }
     }
 
